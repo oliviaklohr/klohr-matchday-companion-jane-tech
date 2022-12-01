@@ -2,10 +2,10 @@
 # frozen_string_literal: true
 
 require 'pry'
+require_relative '../lib/match_functions'
 
-require_relative '../lib/match_functions.rb'
-
-inputFile = ARGV
+input = ARGV
+input_file = input[0]
 
 matchday = {}
 standings = {}
@@ -20,9 +20,9 @@ puts 'To leave the program at any point in execution, type `exit`.'
 puts ''
 
 def separate_team_name_and_score(team)
-  teamData = team.split(' ')
-  score = teamData.pop.to_i
-  name = teamData.join(' ')
+  team_data = team.split(' ')
+  score = team_data.pop.to_i
+  name = team_data.join(' ')
 
   [name, score]
 end
@@ -35,63 +35,67 @@ def score_match(team_one, team_two)
   end
 end
 
-case inputFile.length
+def print_matchday(matchday_number, sorted_standings)
+  puts "Matchday #{matchday_number}"
+  sorted_standings.each_with_index do |record, idx|
+    puts "#{record[0]}: #{record[1][:score]}" if idx <= 2
+  end
+  puts ''
+end
+
+def increment_score(standings, first_team, second_team)
+  if standings.key?(first_team[:name])
+    current_score = standings[first_team[:name]][:score]
+    standings[first_team[:name]] = { score: current_score + score_match(first_team, second_team) }
+  else
+    standings[first_team[:name]] = { score: score_match(first_team, second_team) }
+  end
+end
+
+def sort_standings(standings)
+  standings.sort_by { |k,v| [-v[:score], k] }
+end
+
+def define_teams(line)
+  one, two = line.split(', ')
+  team_one_name, team_one_score = separate_team_name_and_score(one)
+  team_two_name, team_two_score = separate_team_name_and_score(two)
+
+  team_one = Team.new(team_one_name, team_one_score)
+  team_two = Team.new(team_two_name, team_two_score)
+
+  [team_one, team_two]
+end
+
+case input.length
 when 1
   # todo: need to make sure file exists / is the right type before we do this
-  IO.foreach(inputFile[0]) do |line|
-    index = 0
-
-    one, two = line.split(', ')
-    team_one_name, team_one_score = separate_team_name_and_score(one)
-    team_two_name, team_two_score = separate_team_name_and_score(two)
-
-    team_one = Team.new(team_one_name, team_one_score)
-    team_two = Team.new(team_two_name, team_two_score)
-
+  IO.foreach(input_file) do |line|
+    team_one, team_two = define_teams(line)
     teams = [team_one, team_two]
 
-    if (matchday.key?(team_one.name) || matchday.key?(team_two.name))
+    if matchday.key?(team_one.name) || matchday.key?(team_two.name)
       stashed_values = teams
-
       num_games = matchday.length / 2
+      index = 0
 
       num_games.times do
         first_team = Hash[*matchday.to_a.at(index)].values[0]
         second_team = Hash[*matchday.to_a.at(index + 1)].values[0]
         index += 2
 
-        if standings.key?(first_team[:name])
-          current_score = standings[first_team[:name]][:score]
-          standings[first_team[:name]] = { score: current_score + score_match(first_team, second_team) }
-        else
-          standings[first_team[:name]] = { score: score_match(first_team, second_team) }
-        end
-
-        if standings.key?(second_team[:name])
-          current_score = standings[second_team[:name]][:score]
-          standings[second_team[:name]] = { score: current_score + score_match(second_team, first_team) }
-        else
-          standings[second_team[:name]] = { score: score_match(second_team, first_team) }
-        end
+        increment_score(standings, first_team, second_team)
+        increment_score(standings, second_team, first_team)
       end
 
-      sorted_standings = standings.sort_by { |k,v| [-v[:score], k] }
+      sorted_standings = sort_standings(standings)
+      print_matchday(matchday_number, sorted_standings)
 
-      puts "Matchday #{matchday_number}"
-      sorted_standings.each_with_index do |record, index|
-        puts "#{record[0]}: #{record[1][:score]}" if index <= 2
-      end
-      puts ''
-
-      # "write" teams from `stashedValues` into matchDayTemp
-      # puts "ddd matchday: #{matchday}"
       matchday = {}
-      teams.each do |team|
-        matchday[team.name] = { name: team.name, score: team.score }
-      end
+      stashed_values.each { |team| matchday[team.name] = { name: team.name, score: team.score } }
+
       stashed_values = nil
       matchday_number += 1
-      # next;
     else
       teams.each do |team|
         matchday[team.name] = { name: team.name, score: team.score }
@@ -99,8 +103,20 @@ when 1
     end
   end
 
-  # handle last call for last matchday
-  puts teams
+  num_games = matchday.length / 2
+  index = 0
+
+  num_games.times do
+    first_team = Hash[*matchday.to_a.at(index)].values[0]
+    second_team = Hash[*matchday.to_a.at(index + 1)].values[0]
+    index += 2
+
+    increment_score(standings, first_team, second_team)
+    increment_score(standings, second_team, first_team)
+  end
+
+  sorted_standings = sort_standings(standings)
+  print_matchday(matchday_number, sorted_standings)
 
 when 0
   # queue = []
@@ -120,4 +136,5 @@ when 0
   #   end
   # end
 end
+
 # todo - need to handle the case where there are extra args
