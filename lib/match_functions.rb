@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'pry'
 
 module MatchFunctions
@@ -51,7 +52,9 @@ module MatchFunctions
 
     def add_teams_to_league(names)
       names.each do |team_name|
-        @teams_in_league << MatchFunctions::Team.new(team_name) unless @teams_in_league.any? { |team| team.name == team_name }
+        @teams_in_league << MatchFunctions::Team.new(team_name) unless @teams_in_league.any? do |team|
+                                                                         team.name == team_name
+                                                                       end
       end
     end
 
@@ -73,7 +76,9 @@ module MatchFunctions
       @team_two = TeamData.new(team_two_name, team_two_score)
 
       league.add_teams_to_league([@team_one.team_name, @team_two.team_name])
-      repeat_teams = league.teams_in_league.any? { |team| team.name == @team_one.team_name || team.name == @team_two.team_name }
+      repeat_teams = league.teams_in_league.any? do |team|
+        team.name == @team_one.team_name || team.name == @team_two.team_name
+      end
 
       # team_one_points = score_match(team_one_score, team_two_score)
       # team_two_points = score_match(team_two_score, team_one_score)
@@ -88,18 +93,16 @@ module MatchFunctions
         matches_per_day = league.teams_in_league.length / 2
         # puts "matches_per_day: matches_per_day
 
-        new_match_day = league.matches.length % matches_per_day == 0
+        new_match_day = (league.matches.length % matches_per_day).zero?
         # puts "new_match_day: #{new_match_day}"
 
         puts "Match Day #{league.matches.length / matches_per_day}" if new_match_day
         puts "matches: #{league.matches.length}" if new_match_day
       end
 
-      if repeat_teams
-        return true
-      else
-        return false
-      end
+      return true if repeat_teams
+
+      false
 
       # @teams_in_league where name == @team_one.name -> match_outcomes << team_one_points
       # @team_two.match_outcomes << team_two_points
@@ -107,8 +110,6 @@ module MatchFunctions
       # league.teams_in_league.length / 2 is number of games per match day
 
       # generate match
-
-
     end
 
     def get_teams_from_line(line)

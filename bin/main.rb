@@ -53,7 +53,7 @@ def increment_score(standings, first_team, second_team)
 end
 
 def sort_standings(standings)
-  standings.sort_by { |k,v| [-v[:score], k] }
+  standings.sort_by { |k, v| [-v[:score], k] }
 end
 
 def define_teams(line)
@@ -86,7 +86,7 @@ end
 
 case input.length
 when 1
-  # todo: need to make sure file exists / is the right type before we do this
+  # TODO: need to make sure file exists / is the right type before we do this
   IO.foreach(input_file) do |line|
     team_one, team_two = define_teams(line)
     teams = [team_one, team_two]
@@ -109,47 +109,44 @@ when 1
   end
 
   increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
-
 when 0
   queue = []
   Thread.new do
     loop do
-      input = gets.chomp
+      input = $stdin.gets
       queue << input
     end
   end
 
   loop do
-    unless queue.empty?
-      next_line = queue.shift
+    next if queue.empty?
 
-      if next_line == 'exit'
-        puts ''
-        increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
-        exit
-      end
+    next_line = queue.shift
 
-      team_one, team_two = define_teams(next_line)
-      teams = [team_one, team_two]
+    if next_line.nil? || next_line.chomp == 'exit'
+      increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
+      exit
+    end
 
-      if matchday.key?(team_one.name) || matchday.key?(team_two.name)
-        stashed_values = teams
+    team_one, team_two = define_teams(next_line.chomp)
+    teams = [team_one, team_two]
 
-        puts ''
-        increment_score_and_print_matchday(matchday, matchday_number, standings)
+    if matchday.key?(team_one.name) || matchday.key?(team_two.name)
+      stashed_values = teams
 
-        matchday = {}
-        stashed_values.each { |team| matchday[team.name] = { name: team.name, score: team.score } }
+      increment_score_and_print_matchday(matchday, matchday_number, standings)
 
-        stashed_values = nil
-        matchday_number += 1
-      else
-        teams.each do |team|
-          matchday[team.name] = { name: team.name, score: team.score }
-        end
+      matchday = {}
+      stashed_values.each { |team| matchday[team.name] = { name: team.name, score: team.score } }
+
+      stashed_values = nil
+      matchday_number += 1
+    else
+      teams.each do |team|
+        matchday[team.name] = { name: team.name, score: team.score }
       end
     end
   end
 end
 
-# todo - need to handle the case where there are extra args
+# TODO: - need to handle the case where there are extra args
