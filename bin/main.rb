@@ -67,42 +67,7 @@ def define_teams(line)
   [team_one, team_two]
 end
 
-case input.length
-when 1
-  # todo: need to make sure file exists / is the right type before we do this
-  IO.foreach(input_file) do |line|
-    team_one, team_two = define_teams(line)
-    teams = [team_one, team_two]
-
-    if matchday.key?(team_one.name) || matchday.key?(team_two.name)
-      stashed_values = teams
-      num_games = matchday.length / 2
-      index = 0
-
-      num_games.times do
-        first_team = Hash[*matchday.to_a.at(index)].values[0]
-        second_team = Hash[*matchday.to_a.at(index + 1)].values[0]
-        index += 2
-
-        increment_score(standings, first_team, second_team)
-        increment_score(standings, second_team, first_team)
-      end
-
-      sorted_standings = sort_standings(standings)
-      print_matchday(matchday_number, sorted_standings)
-
-      matchday = {}
-      stashed_values.each { |team| matchday[team.name] = { name: team.name, score: team.score } }
-
-      stashed_values = nil
-      matchday_number += 1
-    else
-      teams.each do |team|
-        matchday[team.name] = { name: team.name, score: team.score }
-      end
-    end
-  end
-
+def increment_score_and_print_matchday(matchday, matchday_number, standings)
   num_games = matchday.length / 2
   index = 0
 
@@ -117,24 +82,74 @@ when 1
 
   sorted_standings = sort_standings(standings)
   print_matchday(matchday_number, sorted_standings)
+end
+
+case input.length
+when 1
+  # todo: need to make sure file exists / is the right type before we do this
+  IO.foreach(input_file) do |line|
+    team_one, team_two = define_teams(line)
+    teams = [team_one, team_two]
+
+    if matchday.key?(team_one.name) || matchday.key?(team_two.name)
+      stashed_values = teams
+
+      increment_score_and_print_matchday(matchday, matchday_number, standings)
+
+      matchday = {}
+      stashed_values.each { |team| matchday[team.name] = { name: team.name, score: team.score } }
+
+      stashed_values = nil
+      matchday_number += 1
+    else
+      teams.each do |team|
+        matchday[team.name] = { name: team.name, score: team.score }
+      end
+    end
+  end
+
+  increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
 
 when 0
-  # queue = []
-  # Thread.new do
-  #   loop do
-  #     input = gets.chomp
-  #     exit if input == 'exit'
+  queue = []
+  Thread.new do
+    loop do
+      input = gets.chomp
+      queue << input
+    end
+  end
 
-  #     queue << input
-  #   end
-  # end
+  loop do
+    unless queue.empty?
+      next_line = queue.shift
 
-  # loop do
-  #   unless queue.empty?
-  #     next_line = queue.shift
-  #     parser.parse_line(next_line, league)
-  #   end
-  # end
+      if next_line == 'exit'
+        puts ''
+        increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
+        exit
+      end
+
+      team_one, team_two = define_teams(next_line)
+      teams = [team_one, team_two]
+
+      if matchday.key?(team_one.name) || matchday.key?(team_two.name)
+        stashed_values = teams
+
+        puts ''
+        increment_score_and_print_matchday(matchday, matchday_number, standings)
+
+        matchday = {}
+        stashed_values.each { |team| matchday[team.name] = { name: team.name, score: team.score } }
+
+        stashed_values = nil
+        matchday_number += 1
+      else
+        teams.each do |team|
+          matchday[team.name] = { name: team.name, score: team.score }
+        end
+      end
+    end
+  end
 end
 
 # todo - need to handle the case where there are extra args
