@@ -2,4 +2,4 @@ AllCops:
   TargetRubyVersion: 3.1.2
   StyleGuideBaseURL: https://rubystyle.guide
   Exclude:
-    - 'bin/*'
+    - 'bin/{setup}'

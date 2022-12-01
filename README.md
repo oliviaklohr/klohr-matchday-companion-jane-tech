@@ -11,3 +11,13 @@ For insight into my thought process on creating this solution, please see [thoug
 ## Usage
 
 1. Run `bundle install` to ensure all dependencies are installed on your machine.
+2. Run `chmod +x bin/main.rb` <!-- TODO: Figure out how to not have to do this lol. There's gotta be a way. -->
+3. The command `rspec` will run all associated tests.
+4. Run `bin/main.rb` without any arguments to input match data via the console line-by-line
+OR
+Run `bin/main.rb given-documentation/sample-input.txt` to input match data via a file.
+
+## Assumptions
+
+- each team plays every day
+
