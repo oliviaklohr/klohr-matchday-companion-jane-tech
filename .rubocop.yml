@@ -1,5 +1,16 @@
 AllCops:
   TargetRubyVersion: 3.1.2
   StyleGuideBaseURL: https://rubystyle.guide
+  SuggestExtensions: false
+  NewCops: enable
   Exclude:
     - 'bin/{setup}'
+
+Metrics/AbcSize:
+  Max: 20
+
+Metrics/MethodLength:
+  Max: 20
+
+Style/Documentation:
+  Enabled: false

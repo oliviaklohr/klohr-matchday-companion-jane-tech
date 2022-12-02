@@ -1,8 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'pry'
-require_relative '../lib/match_functions'
+require_relative '../lib/matchday_companion'
 
 input = ARGV
 input_file = input[0]
@@ -12,6 +11,9 @@ standings = {}
 stashed_values = nil
 teams = nil
 matchday_number = 1
+ACCEPTED_FORMATS = ['.txt'].freeze
+
+parser = MatchdayCompanion::Parser.new
 
 Team = Struct.new(:name, :score)
 
@@ -19,83 +21,28 @@ puts 'Welcome to the Matchday Companion for the Jane Technologies Soccer League!
 puts 'To leave the program at any point in execution, type `exit`.'
 puts ''
 
-def separate_team_name_and_score(team)
-  team_data = team.split(' ')
-  score = team_data.pop.to_i
-  name = team_data.join(' ')
-
-  [name, score]
-end
-
-def score_match(team_one, team_two)
-  if team_one[:score] > team_two[:score]
-    3
-  else
-    team_one[:score] == team_two[:score] ? 1 : 0
-  end
-end
-
-def print_matchday(matchday_number, sorted_standings)
-  puts "Matchday #{matchday_number}"
-  sorted_standings.each_with_index do |record, idx|
-    puts "#{record[0]}: #{record[1][:score]}" if idx <= 2
-  end
-  puts ''
-end
-
-def increment_score(standings, first_team, second_team)
-  if standings.key?(first_team[:name])
-    current_score = standings[first_team[:name]][:score]
-    standings[first_team[:name]] = { score: current_score + score_match(first_team, second_team) }
-  else
-    standings[first_team[:name]] = { score: score_match(first_team, second_team) }
-  end
-end
-
-def sort_standings(standings)
-  standings.sort_by { |k, v| [-v[:score], k] }
-end
-
-def define_teams(line)
-  one, two = line.split(', ')
-  team_one_name, team_one_score = separate_team_name_and_score(one)
-  team_two_name, team_two_score = separate_team_name_and_score(two)
-
-  team_one = Team.new(team_one_name, team_one_score)
-  team_two = Team.new(team_two_name, team_two_score)
-
-  [team_one, team_two]
-end
-
-def increment_score_and_print_matchday(matchday, matchday_number, standings)
-  num_games = matchday.length / 2
-  index = 0
-
-  num_games.times do
-    first_team = Hash[*matchday.to_a.at(index)].values[0]
-    second_team = Hash[*matchday.to_a.at(index + 1)].values[0]
-    index += 2
-
-    increment_score(standings, first_team, second_team)
-    increment_score(standings, second_team, first_team)
-  end
-
-  sorted_standings = sort_standings(standings)
-  print_matchday(matchday_number, sorted_standings)
-end
-
 case input.length
 when 1
-  # TODO: need to make sure file exists / is the right type before we do this
-  IO.foreach(input_file) do |line|
-    team_one, team_two = define_teams(line)
+  unless ACCEPTED_FORMATS.include?(File.extname(input_file))
+    puts "Invalid file type! The following types are accepted: #{ACCEPTED_FORMATS.join(', ')}"
+    exit
+  end
+
+  unless File.file?(input_file)
+    puts "Oop, that file doesn't exist! Please check your file path and run again."
+    exit
+  end
+
+  File.foreach(input_file) do |line|
+    next unless parser.valid_line_format?(line) # deal with invalid lines
+
+    team_one, team_two = parser.define_teams(line)
     teams = [team_one, team_two]
 
     if matchday.key?(team_one.name) || matchday.key?(team_two.name)
       stashed_values = teams
 
-      increment_score_and_print_matchday(matchday, matchday_number, standings)
-
+      parser.increment_score_and_print_matchday(matchday, matchday_number, standings)
       matchday = {}
       stashed_values.each { |team| matchday[team.name] = { name: team.name, score: team.score } }
 
@@ -108,7 +55,7 @@ when 1
     end
   end
 
-  increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
+  parser.increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
 when 0
   queue = []
   Thread.new do
@@ -124,9 +71,11 @@ when 0
     next_line = queue.shift
 
     if next_line.nil? || next_line.chomp == 'exit'
-      increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
+      parser.increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
       exit
     end
+
+    next unless parser.valid_line_format?(next_line) # deal with invalid lines
 
     team_one, team_two = define_teams(next_line.chomp)
     teams = [team_one, team_two]
@@ -134,8 +83,7 @@ when 0
     if matchday.key?(team_one.name) || matchday.key?(team_two.name)
       stashed_values = teams
 
-      increment_score_and_print_matchday(matchday, matchday_number, standings)
-
+      parser.increment_score_and_print_matchday(matchday, matchday_number, standings)
       matchday = {}
       stashed_values.each { |team| matchday[team.name] = { name: team.name, score: team.score } }
 
@@ -147,6 +95,10 @@ when 0
       end
     end
   end
+else
+  puts 'Too many arguments!'
+  puts 'Usage:'
+  puts 'bin/main.rb <FILENAME>    : read in from a file'
+  puts 'cat <FILE> | bin/main.rb  : pipe in from stdin'
+  puts 'bin/main.rb               : feed each line in one-by-one in the CLI.'
 end
-
-# TODO: - need to handle the case where there are extra args
