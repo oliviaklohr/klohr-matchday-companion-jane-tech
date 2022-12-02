@@ -4,6 +4,45 @@ module MatchdayCompanion
   Team = Struct.new(:name, :score)
 
   class Parser
+    def valid_line_format?(line)
+      return false if ['', ' '].include?(line) # get rid of blank lines
+      return false unless line.split(',').length > 1 # get rid of lines without two teams
+
+      true
+    end
+
+    def define_teams(line)
+      one, two = line.split(', ')
+      team_one_name, team_one_score = separate_team_name_and_score(one)
+      team_two_name, team_two_score = separate_team_name_and_score(two)
+
+      team_one = Team.new(team_one_name, team_one_score)
+      team_two = Team.new(team_two_name, team_two_score)
+
+      [team_one, team_two]
+    end
+
+    def increment_score_and_print_matchday(matchday, matchday_number, standings)
+      num_games = matchday.length / 2
+      index = 0
+
+      num_games.times do
+        first_team = Hash[*matchday.to_a.at(index)].values[0]
+        second_team = Hash[*matchday.to_a.at(index + 1)].values[0]
+        index += 2
+
+        increment_score(standings, first_team, second_team)
+        increment_score(standings, second_team, first_team)
+      end
+
+      sorted_standings = sort_standings(standings)
+      print_matchday(matchday_number, sorted_standings)
+    end
+
+    # private
+    # NOTE: I left this commented out so I could test these functions,
+    # but theoretically, everything below this line could be private.
+
     def separate_team_name_and_score(team)
       team_data = team.split
       score = team_data.pop.to_i
@@ -39,41 +78,6 @@ module MatchdayCompanion
 
     def sort_standings(standings)
       standings.sort_by { |k, v| [-v[:score], k] }
-    end
-
-    def valid_line_format?(line)
-      return false if ['', ' '].include?(line) # get rid of blank lines
-      return false unless line.split(',').length > 1 # get rid of lines without two teams
-
-      true
-    end
-
-    def define_teams(line)
-      one, two = line.split(', ')
-      team_one_name, team_one_score = separate_team_name_and_score(one)
-      team_two_name, team_two_score = separate_team_name_and_score(two)
-
-      team_one = Team.new(team_one_name, team_one_score)
-      team_two = Team.new(team_two_name, team_two_score)
-
-      [team_one, team_two]
-    end
-
-    def increment_score_and_print_matchday(matchday, matchday_number, standings)
-      num_games = matchday.length / 2
-      index = 0
-
-      num_games.times do
-        first_team = Hash[*matchday.to_a.at(index)].values[0]
-        second_team = Hash[*matchday.to_a.at(index + 1)].values[0]
-        index += 2
-
-        increment_score(standings, first_team, second_team)
-        increment_score(standings, second_team, first_team)
-      end
-
-      sorted_standings = sort_standings(standings)
-      print_matchday(matchday_number, sorted_standings)
     end
   end
 end

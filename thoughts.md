@@ -70,3 +70,5 @@ While this wasn't part of the requirements, I opted to do this because when I im
 
 - In a perfect world, I would loved to have DRY'd (DRYed? neither of those look right haha) up the code a bit more. Several of my methods don't completely abide by the single responsibility principle either, which isn't the most ideal.
 - While I obfuscated a fair amount of this functionality into [matchday_companion.rb](lib/matchday_companion.rb), most of that functionality might benefit from being restructured into its own classes. I put my methods into `MatchdayCompanion::Parser` so as to increase the ease of testing and data storage given time constraints, but some of the functionality could have been better handled.
+- I tested all of the methods in [matchday_companion.rb](lib/matchday_companion.rb) within [matchday_companion_spec.rb](spec/lib/matchday_companion_spec.rb), but ideally we would also test the `main.rb` file as well. I only opted to forgo this in respect of time, but it is definitely unideal.
+- RSpec isn't really meant to test CLI applications, either, so we'd likely be better to pick a different framework.

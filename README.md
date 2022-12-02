@@ -23,3 +23,4 @@ For insight into my thought process on creating this solution, please see [thoug
 - Each team plays every day. In a real-world scenario, this is unlikely, but for ease of determining match delimiting, this assumption has been made.
 - File input is just a `.txt` file with comma-delimited strings. It is also a file, not a directory.
 - Team names don't have commas in them.
+- I validate a lot of bad string combos (`''`, `' '`, and `'Santa Cruz Slugs 3`), but I did assume that the format would be `Santa Cruz Slugs 3, Aptos FC 2`. Or, in other words, I am not checking that it is `<String> <Num>, <String> <Num>`. This is unideal and an improvement that could be made for sure.

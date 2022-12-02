@@ -5,6 +5,7 @@ AllCops:
   NewCops: enable
   Exclude:
     - 'bin/{setup}'
+    - 'spec/**/*'
 
 Metrics/AbcSize:
   Max: 20
