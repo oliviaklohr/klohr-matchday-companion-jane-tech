@@ -22,6 +22,11 @@ RSpec.describe MatchdayCompanion do
         line = 'Santa Cruz Slugs 3'
         expect(parser.valid_line_format?(line)).to eq(false)
       end
+
+      it 'returns false if the line contains more than 2 teams (invalid)' do
+        line = 'Santa Cruz Slugs 3, Aptos FC 2, Sporting KC 9'
+        expect(parser.valid_line_format?(line)).to eq(false)
+      end
     end
 
     context 'define_teams' do
@@ -97,12 +102,17 @@ RSpec.describe MatchdayCompanion do
     context 'sort_standings' do
       let(:standings) do
         { 'San Jose Earthquakes' => { score: 1 }, 'Santa Cruz Slugs' => { score: 1 },
-          'Capitola Seahorses' => { score: 3 }, 'Aptos FC' => { score: 0 }, 'Felton Lumberjacks' => { score: 3 }, 'Monterey United' => { score: 0 } }
+          'Capitola Seahorses' => { score: 3 }, 'Aptos FC' => { score: 0 },
+          'Felton Lumberjacks' => { score: 3 }, 'Monterey United' => { score: 0 } }
       end
 
       it 'sorts the standings first by reverse score & then by name to tie-break' do
         expect(parser.sort_standings(standings)).to eq([['Capitola Seahorses', { score: 3 }],
-                                                        ['Felton Lumberjacks', { score: 3 }], ['San Jose Earthquakes', { score: 1 }], ['Santa Cruz Slugs', { score: 1 }], ['Aptos FC', { score: 0 }], ['Monterey United', { score: 0 }]])
+                                                        ['Felton Lumberjacks', { score: 3 }],
+                                                        ['San Jose Earthquakes', { score: 1 }],
+                                                        ['Santa Cruz Slugs', { score: 1 }],
+                                                        ['Aptos FC', { score: 0 }],
+                                                        ['Monterey United', { score: 0 }]])
       end
     end
   end

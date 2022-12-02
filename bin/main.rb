@@ -12,10 +12,9 @@ stashed_values = nil
 teams = nil
 matchday_number = 1
 ACCEPTED_FORMATS = ['.txt'].freeze
+EXIT_COMMAND = 'exit'
 
 parser = MatchdayCompanion::Parser.new
-
-Team = Struct.new(:name, :score)
 
 puts 'Welcome to the Matchday Companion for the Jane Technologies Soccer League!'
 puts 'To leave the program at any point in execution, type `exit`.'
@@ -29,7 +28,7 @@ when 1
   end
 
   unless File.file?(input_file)
-    puts "Oop, that file doesn't exist! Please check your file path and run again."
+    puts "Oops, that file doesn't exist! Please check your file path and run again."
     exit
   end
 
@@ -70,14 +69,14 @@ when 0
 
     next_line = queue.shift
 
-    if next_line.nil? || next_line.chomp == 'exit'
+    if next_line.nil? || next_line.chomp == EXIT_COMMAND
       parser.increment_score_and_print_matchday(matchday, matchday_number, standings) # final matchday
       exit
     end
 
     next unless parser.valid_line_format?(next_line) # deal with invalid lines
 
-    team_one, team_two = define_teams(next_line.chomp)
+    team_one, team_two = parser.define_teams(next_line.chomp)
     teams = [team_one, team_two]
 
     if matchday.key?(team_one.name) || matchday.key?(team_two.name)
